@@ -6,6 +6,8 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -19,6 +21,9 @@ public class MemberAddServlet extends HttpServlet {
 	//여기서는 '신규회원' 링크를 클릭할 때 GET 요청이 발생하기 때문에 doGet() 메서드를 오버라이딩 하였다.
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
+		RequestDispatcher rd = request.getRequestDispatcher("/member/MemberForm.jsp");
+		rd.forward(request, response);
+		/*
 		response.setContentType("text/html; charset=UTF-8");
 		PrintWriter out = response.getWriter();
 		out.println("<html><head><title>회원등록</title></head>");
@@ -31,6 +36,7 @@ public class MemberAddServlet extends HttpServlet {
 		out.println("<input type='reset' value='취소'>");
 		out.println("</form>");
 		out.println("</body></html>");
+		*/
 	}
 	
 	@Override
@@ -41,8 +47,14 @@ public class MemberAddServlet extends HttpServlet {
 		PreparedStatement stmt = null;
 		
 		try {
+			/*
 			DriverManager.registerDriver(new com.mysql.jdbc.Driver());
+			*/
+			ServletContext sc = this.getServletContext();
+			conn = (Connection) sc.getAttribute("conn");
+			/*
 			conn = DriverManager.getConnection("jdbc:mysql://localhost/join_db", "root","Ksy29396135!");
+			*/
 			//MEMBERS 테이블에 회원 정보를 입력하는 SQL문을 준비한다.
 			stmt = conn.prepareStatement("INSERT INTO MEMBERS(EMAIL,PWD,MNAME,CRE_DATE,MOD_DATE)" + "VALUES(?,?,?,NOW(),NOW())");
 			//입력 매개변수의 번호는 1부터 시작한다.
@@ -73,10 +85,14 @@ public class MemberAddServlet extends HttpServlet {
 			//response.addHeader("Refresh", "1;url=list");
 			
 		} catch(Exception e) {
-			throw new ServletException(e);
+			//throw new ServletException(e);
+			e.printStackTrace();
+			request.setAttribute("error", e);
+			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
+			rd.forward(request, response);
 		} finally {
 			try { if (stmt != null) stmt.close();} catch(Exception e) {}
-			try { if (conn != null) conn.close();} catch(Exception e) {}
+			//try { if (conn != null) conn.close();} catch(Exception e) {}
 		}
 	}
 }

@@ -66,12 +66,13 @@ public class MemberListServlet extends HttpServlet{
 			rd.include(request, response);
 		} catch(Exception e) {
 			//throw new ServletException(e);
+			e.printStackTrace();
 			request.setAttribute("error", e);
 			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
 			rd.forward(request, response);
 		} finally {
 			try {if (rs != null) rs.close();} catch(Exception e) {}
-			try {if (stmt != null) rs.close();} catch(Exception e) {}
+			try {if (stmt != null) stmt.close();} catch(Exception e) {}
 			//try {if (conn != null) conn.close();} catch(Exception e) {}
 		}
 	}
