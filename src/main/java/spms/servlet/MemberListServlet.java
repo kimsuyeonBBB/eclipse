@@ -6,54 +6,114 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.ArrayList;
 
 import javax.servlet.GenericServlet;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-//¾Ö³ëÅ×ÀÌ¼Ç ÀÌ¿ëÇÏ¿© ¼­ºí¸´ÀÇ ¹èÄ¡Á¤º¸ ¼³Á¤
+import spms.vo.Member;
+
+//ì• ë…¸í…Œì´ì…˜ ì´ìš©í•˜ì—¬ ì„œë¸”ë¦¿ì˜ ë°°ì¹˜ì •ë³´ ì„¤ì •
 //@WebServlet("/member/list")
-//¼­ºí¸´À» ¸¸µé±âÀ§ÇØ GenericServlet Å¬·¡½º¸¦ »ó¼Ó¹Ş°í service() ¸Ş¼Òµå¸¦ ±¸ÇöÇÑ´Ù.
-public class MemberListServlet extends GenericServlet{
-
+//ì„œë¸”ë¦¿ì„ ë§Œë“¤ê¸°ìœ„í•´ GenericServlet í´ë˜ìŠ¤ë¥¼ ìƒì†ë°›ê³  service() ë©”ì†Œë“œë¥¼ êµ¬í˜„í•œë‹¤.
+public class MemberListServlet extends HttpServlet{
+	private static final long serialVersionUID = 1L;
+	
+	//HTMLì„ ì¶œë ¥í•˜ëŠ” ëª¨ë“  ì½”ë“œë¥¼ ì œê±°í•œë‹¤.
+	//íšŒì›ëª©ë¡ í™”ë©´ì„ ìƒì„±í•˜ê³  ì¶œë ¥í•˜ëŠ” ê²ƒì€ MemberList.jspê°€ ë‹´ë‹¹í•  ê²ƒì´ë‹¤.
 	@Override
-	public void service(ServletRequest request, ServletResponse response) throws ServletException, IOException {
-		//JDBC °´Ã¼ ÁÖ¼Ò¸¦ º¸°üÇÒ ÂüÁ¶º¯¼ö ¼±¾ğ
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		Connection conn = null;
 		Statement stmt = null;
 		ResultSet rs = null;
 		
 		try {
-			//»ç¿ëÇÒ JDBC µå¶óÀÌ¹ö¸¦ µî·Ï
-			//com.mysql.jdbc.Driver() Å¬·¡½º´Â WEB-INF/lib Æú´õ¿¡ ÀÖ´Â jar¿¡ µé¾îÀÖ´Ù.
+			ServletContext sc = this.getServletContext();
+			/*
+			//DB ì»¤ë„¥ì…˜ì„ ì¤€ë¹„í•˜ëŠ” ì½”ë“œ ì‚­ì œ 
+			//(ì„œë¸”ë¦¿ì—ì„œ DB ì»¤ë„¥ì…˜ì„ ì§ì ‘ ì¤€ë¹„í•  í•„ìš”ê°€ ì—†ê¸° ë•Œë¬¸ì´ë‹¤. ServletContext ë³´ê´€ì†Œì— ì €ì¥ëœ DB ì»¤ë„¥ì…˜ ê°ì²´ë¥¼ êº¼ë‚´ì“°ë©´ ëœë‹¤.)
+			Class.forName(sc.getInitParameter("driver"));
+			conn = DriverManager.getConnection(sc.getInitParameter("url"),sc.getInitParameter("username"),sc.getInitParameter("password"));  */
+			
+			//ServletContext ë³´ê´€ì†Œì—ì„œ DB ì»¤ë„¥ì…˜ì„ êº¼ë‚¸ë‹¤.
+			conn = (Connection) sc.getAttribute("conn");
+			stmt = conn.createStatement();
+			rs = stmt.executeQuery("SELECT MNO,MNAME,EMAIL,CRE_DATE" + " FROM MEMBERS" + " ORDER BY MNO ASC");
+			
+			response.setContentType("text/html; charset=UTF-8");
+			ArrayList<Member> members = new ArrayList<Member>();
+			
+			//ë°ì´í„°ë² ì´ìŠ¤ì—ì„œ íšŒì› ì •ë³´ë¥¼ ê°€ì ¸ì™€ Memberì— ë‹´ëŠ”ë‹¤.
+			//ê·¸ë¦¬ê³  Member ê°ì²´ë¥¼ ArrayListì— ì¶”ê°€í•œë‹¤.
+			//ê°ì²´ë¥¼ ìƒì„±í•œ ì¦‰ì‹œ ì…‹í„° ë©”ì„œë“œë¥¼ ì—°ì†ìœ¼ë¡œ í˜¸ì¶œí•˜ì—¬ ê°’ì„ í• ë‹¹í•œë‹¤.
+			while(rs.next()) {
+				members.add(new Member().setNo(rs.getInt("MNO")).setName(rs.getString("MNAME")).setEmail(rs.getString("EMAIL")).setCreatedDate(rs.getDate("CRE_DATE")));
+			}
+			
+			//requestì— íšŒì› ëª©ë¡ ë°ì´í„° ë³´ê´€í•œë‹¤.
+			request.setAttribute("members", members);
+			
+			//JSPë¡œ ì¶œë ¥ì„ ìœ„ì„í•œë‹¤.
+			RequestDispatcher rd = request.getRequestDispatcher("/member/MemberList.jsp");
+			rd.include(request, response);
+		} catch(Exception e) {
+			//throw new ServletException(e);
+			request.setAttribute("error", e);
+			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
+			rd.forward(request, response);
+		} finally {
+			try {if (rs != null) rs.close();} catch(Exception e) {}
+			try {if (stmt != null) rs.close();} catch(Exception e) {}
+			//try {if (conn != null) conn.close();} catch(Exception e) {}
+		}
+	}
+	
+}	
+	/*
+	@Override
+	public void service(ServletRequest request, ServletResponse response) throws ServletException, IOException {
+		//JDBC ê°ì²´ ì£¼ì†Œë¥¼ ë³´ê´€í•  ì°¸ì¡°ë³€ìˆ˜ ì„ ì–¸
+		Connection conn = null;
+		Statement stmt = null;
+		ResultSet rs = null;
+		
+		try {
+			//ì‚¬ìš©í•  JDBC ë“œë¼ì´ë²„ë¥¼ ë“±ë¡
+			//com.mysql.jdbc.Driver() í´ë˜ìŠ¤ëŠ” WEB-INF/lib í´ë”ì— ìˆëŠ” jarì— ë“¤ì–´ìˆë‹¤.
 			DriverManager.registerDriver(new com.mysql.jdbc.Driver());
-			//µå¶óÀÌ¹ö¸¦ »ç¿ëÇÏ¿© MySQL ¼­¹ö¿Í ¿¬°á
+			//ë“œë¼ì´ë²„ë¥¼ ì‚¬ìš©í•˜ì—¬ MySQL ì„œë²„ì™€ ì—°ê²°
 			conn = DriverManager.getConnection("jdbc:mysql://localhost/join_db",
 					"root","Ksy29396135!");
-			//Ä¿³Ø¼Ç ±¸ÇöÃ¼ ÀÌ¿ëÇÏ¿© SQL¹®À» ½ÇÇàÇÒ °´Ã¼ ÁØºñ
+			//ì»¤ë„¥ì…˜ êµ¬í˜„ì²´ ì´ìš©í•˜ì—¬ SQLë¬¸ì„ ì‹¤í–‰í•  ê°ì²´ ì¤€ë¹„
 			stmt = conn.createStatement();
-			//executeQuery()´Â °á°ú°¡ ¸¸µé¾îÁö´Â SQL¹®À» ½ÇÇàÇÒ ¶§ »ç¿ëÇÑ´Ù.
+			//executeQuery()ëŠ” ê²°ê³¼ê°€ ë§Œë“¤ì–´ì§€ëŠ” SQLë¬¸ì„ ì‹¤í–‰í•  ë•Œ ì‚¬ìš©í•œë‹¤.
 			rs = stmt.executeQuery("select MNO,MNAME,EMAIL,CRE_DATE" + " from join_db.MEMBERS" + " order by MNO ASC");
-			//¼­¹ö¿¡¼­ °¡Á®¿Â µ¥ÀÌÅÍ¸¦ »ç¿ëÇÏ¿© HTML ¸¸µé¾î¼­ À¥ºê¶ó¿ìÀú·Î Ãâ·Â
+			//ì„œë²„ì—ì„œ ê°€ì ¸ì˜¨ ë°ì´í„°ë¥¼ ì‚¬ìš©í•˜ì—¬ HTML ë§Œë“¤ì–´ì„œ ì›¹ë¸Œë¼ìš°ì €ë¡œ ì¶œë ¥
 			response.setContentType("text/html; charset=UTF-8");
 			PrintWriter out = response.getWriter();
-			out.println("<html><head><title>È¸¿ø¸ñ·Ï</title></head>");
-			out.println("<body><h1>È¸¿ø¸ñ·Ï</h1>");
-			out.println("<p><a href='add'>½Å±Ô È¸¿ø</a></p>");
+			out.println("<html><head><title>íšŒì›ëª©ë¡</title></head>");
+			out.println("<body><h1>íšŒì›ëª©ë¡</h1>");
+			out.println("<p><a href='add'>ì‹ ê·œ íšŒì›</a></p>");
 			
-			//select ½ÇÇà °á°ú¸¦ °¡Á®¿À´Â ºÎºĞ
+			//select ì‹¤í–‰ ê²°ê³¼ë¥¼ ê°€ì ¸ì˜¤ëŠ” ë¶€ë¶„
 			while(rs.next()) {
 				out.println(rs.getInt("MNO") + "," + "<a href='update?no=" + rs.getInt("MNO") + "'>"
 			+ rs.getString("MNAME") + "</a>," + rs.getString("EMAIL") + ","
-						+ rs.getDate("CRE_DATE") + "<a href='delete?no=" + rs.getInt("MNO") + "'>" + "[»èÁ¦]" + "</a>"+ "<br>");
+						+ rs.getDate("CRE_DATE") + "<a href='delete?no=" + rs.getInt("MNO") + "'>" + "[ì‚­ì œ]" + "</a>"+ "<br>");
 			}
 			out.println("</body></html>");
 		} catch (Exception e) {
 			throw new ServletException(e);
 		} finally {
-			//ÀÚ¿øÀ» ÇØÁ¦ÇÒ ¶§´Â ¿ª¼øÀ¸·Î Ã³¸®ÇÑ´Ù.
+			//ìì›ì„ í•´ì œí•  ë•ŒëŠ” ì—­ìˆœìœ¼ë¡œ ì²˜ë¦¬í•œë‹¤.
 			try { if (rs != null) rs.close();} catch(Exception e) {}
 			try { if (stmt != null) stmt.close();} catch(Exception e) {}
 			try {if (conn != null) conn.close();} catch(Exception e) {}
@@ -61,3 +121,4 @@ public class MemberListServlet extends GenericServlet{
 	}
 
 }
+*/
