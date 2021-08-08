@@ -18,39 +18,31 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import spms.dao.MemberDao;
+
 //@WebServlet("/member/delete")
 public class MemberDeleteServlet extends HttpServlet{
 	private static final long serialVersionUID = 1L;
 	
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-		//request.setCharacterEncoding("UTF-8");
-		Connection conn = null;
-		Statement stmt = null;
 		try {
 			ServletContext sc = this.getServletContext();
-			/*
-			//doGet()메서드처럼 초기화 매개변수 이용하여 JDBC 드라이버 로딩
-			Class.forName(this.getInitParameter("driver"));
-			//데이터베이스 연결할 때 서블릿 초기화 매개변수 이용
-			conn = DriverManager.getConnection(this.getInitParameter("url"), this.getInitParameter("username"), this.getInitParameter("password"));
-			*/
-			conn = (Connection) sc.getAttribute("conn");
-			////회원정보 변경하기 위해 UPDATE문 사용 
-			stmt = conn.createStatement();
-			stmt.executeUpdate("DELETE FROM join_db.MEMBERS WHERE MNO=" + request.getParameter("no"));
+			Connection conn = (Connection) sc.getAttribute("conn");
+			
+			MemberDao memberDao = new MemberDao();
+			memberDao.setConnection(conn);
+			
+			memberDao.delete(Integer.parseInt(request.getParameter("no")));
+			
 			response.sendRedirect("list");
 			
 		} catch(Exception e) {
-			//throw new ServletException(e);
 			e.printStackTrace();
 			request.setAttribute("error", e);
 			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
 			rd.forward(request, response);
-		} finally {
-			try {if (stmt != null) stmt.close();} catch(Exception e) {}
-			//try {if (conn != null) conn.close();} catch(Exception e) {}
-		}
+		} 
 	}
 	
 }

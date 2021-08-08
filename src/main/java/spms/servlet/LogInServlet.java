@@ -14,10 +14,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import spms.dao.MemberDao;
 import spms.vo.Member;
 
 @WebServlet("/auth/login")
 public class LogInServlet extends HttpServlet {
+	private static final long serialVersionUID = 1L;
+	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		RequestDispatcher rd = request.getRequestDispatcher("/auth/LogInForm.jsp");
@@ -29,37 +32,27 @@ public class LogInServlet extends HttpServlet {
 	//사용자가 이메일과 암호를 입력한 후 POST 요청을 하면 doPost()가 호출된다.
 	//doPost()에서는 데이터베이스로부터 회원 정보를 조회한다.
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-		Connection conn = null;
-		PreparedStatement stmt = null;
-		ResultSet rs = null;
-		
+	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{		
 		try {
 			ServletContext sc = this.getServletContext();
-			conn = (Connection) sc.getAttribute("conn");
-			stmt = conn.prepareStatement("SELECT MNAME,EMAIL FROM MEMBERS" + " WHERE EMAIL=? AND PWD=?");
-			stmt.setString(1, request.getParameter("email"));
-			stmt.setString(2, request.getParameter("password"));
-			rs = stmt.executeQuery();
-			if(rs.next()) {
-				//만약 이메일과 암호가 일치하는 회원을 찾는다면 값 객체 Member에 회원 정보를 담는다.
-				Member member = new Member().setEmail(rs.getString("EMAIL")).setName(rs.getString("MNAME"));
-				//Member 객체를 HttpSession에 보관한다.
+			Connection conn = (Connection) sc.getAttribute("conn");
+			
+			MemberDao memberDao = new MemberDao();
+			memberDao.setConnection(conn);
+			
+			Member member = memberDao.exist(
+					request.getParameter("email"),
+					request.getParameter("password"));
+			if(member != null) {
 				HttpSession session = request.getSession();
 				session.setAttribute("member", member);
-				//로그인 성공이면 /member/list로 리다이렉트한다.
 				response.sendRedirect("../member/list");
 			} else {
-				//로그인에 실패한다면 /auth/LogInFail.jsp로 포워딩한다.
 				RequestDispatcher rd = request.getRequestDispatcher("/auth/LogInFail.jsp");
 				rd.forward(request, response);
 			}
 		} catch(Exception e) {
 			throw new ServletException(e);
-		} finally {
-			try {if (rs != null) rs.close();} catch (Exception e) {}
-			try {if (rs != null) rs.close();} catch (Exception e) {}
-		}
+		} 
 	}
-
 }
