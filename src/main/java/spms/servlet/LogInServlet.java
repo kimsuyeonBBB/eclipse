@@ -23,22 +23,14 @@ public class LogInServlet extends HttpServlet {
 	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-		RequestDispatcher rd = request.getRequestDispatcher("/auth/LogInForm.jsp");
-		//웹 브라우저로 부터 GET 요청이 들어오면 doGet()이 호출되어 LogInForm.jsp로 포워딩 한다.
-		//(JSP에서 다시 서블릿으로 돌아올 필요가 없어서 인클루딩 대신 포워딩으로 처리했다.)
-		rd.forward(request, response);
+		request.setAttribute("viewUrl", "/auth/LogInForm.jsp");
 	}
 	
-	//사용자가 이메일과 암호를 입력한 후 POST 요청을 하면 doPost()가 호출된다.
-	//doPost()에서는 데이터베이스로부터 회원 정보를 조회한다.
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{		
 		try {
 			ServletContext sc = this.getServletContext();
-			Connection conn = (Connection) sc.getAttribute("conn");
-			
-			MemberDao memberDao = new MemberDao();
-			memberDao.setConnection(conn);
+			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
 			
 			Member member = memberDao.exist(
 					request.getParameter("email"),
@@ -46,10 +38,9 @@ public class LogInServlet extends HttpServlet {
 			if(member != null) {
 				HttpSession session = request.getSession();
 				session.setAttribute("member", member);
-				response.sendRedirect("../member/list");
+				request.setAttribute("viewUrl", "redirect:../member/list.do");
 			} else {
-				RequestDispatcher rd = request.getRequestDispatcher("/auth/LogInFail.jsp");
-				rd.forward(request, response);
+				request.setAttribute("viewUrl", "/auth/LogInFail.jsp");
 			}
 		} catch(Exception e) {
 			throw new ServletException(e);

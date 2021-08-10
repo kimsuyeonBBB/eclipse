@@ -27,23 +27,15 @@ public class MemberUpdateServlet extends HttpServlet {
 		try {
 			//컨텍스트 초기화 매개변수의 값을 얻기 위해 객체가 필요하다.
 			ServletContext sc = this.getServletContext();
-			Connection conn = (Connection) sc.getAttribute("conn");
-			
-			MemberDao memberDao = new MemberDao();
-			memberDao.setConnection(conn);
+			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
 			
 			Member member = memberDao.selectOne(Integer.parseInt(request.getParameter("no")));
 			
 			request.setAttribute("member", member);
-			
-			RequestDispatcher rd = request.getRequestDispatcher("/member/MemberUpdateForm.jsp");
-			rd.forward(request, response);
+			request.setAttribute("viewUrl", "/member/MemberUpdateForm.jsp");
 			
 		} catch (Exception e) {
-			e.printStackTrace();
-			request.setAttribute("error", e);
-			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
-			rd.forward(request, response);
+			throw new ServletException(e);
 		} 
 	}
 	
@@ -51,23 +43,15 @@ public class MemberUpdateServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		try {
 			ServletContext sc = this.getServletContext();
-			Connection conn = (Connection) sc.getAttribute("conn");
+			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
+
+			Member member = (Member)request.getAttribute("member");
+			memberDao.update(member);
 			
-			MemberDao memberDao = new MemberDao();
-			memberDao.setConnection(conn);
-			
-			memberDao.update(new Member()
-					.setNo(Integer.parseInt(request.getParameter("no")))
-					.setName(request.getParameter("name"))
-					.setEmail(request.getParameter("email")));
-			
-			response.sendRedirect("list");
+			request.setAttribute("viewUrl", "redirect:list.do");
 			
 		} catch(Exception e) {
-			e.printStackTrace();
-			request.setAttribute("error", e);
-			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
-			rd.forward(request, response);
+			throw new ServletException(e);
 		} 
 	}
 }

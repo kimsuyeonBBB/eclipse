@@ -11,6 +11,8 @@ import javax.servlet.http.HttpSession;
 
 @WebServlet("/auth/logout")
 public class LogOutServlet extends HttpServlet{
+	private static final long serialVersionUID = 1L;
+	
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		HttpSession session = request.getSession();
@@ -18,6 +20,6 @@ public class LogOutServlet extends HttpServlet{
 		//세션 객체가 무효화 된다는 것은 HttpSession 객체가 제거된다는 것을 의미한다.
 		session.invalidate();
 		
-		response.sendRedirect("login");
+		request.setAttribute("viewUrl", "redirect:login.do");
 	}
 }

@@ -17,42 +17,35 @@ import javax.servlet.http.HttpServletResponse;
 import spms.dao.MemberDao;
 import spms.vo.Member;
 
+//프런트 컨트롤러 적용
+
 //HttpServlet 클래스는 GenericServlet 클래스의 하위 클래스이다.
 @WebServlet("/member/add")
 public class MemberAddServlet extends HttpServlet {
-	private static final long serialVersionUID = 1L;
 	
 	//HttpServlet을 상속받을 때 service() 메서드를 직접 구현하기보다는 클라이언트의 요청 방식에 따라 doXXX() 메서드를 오버라이딩 한다.
 	//여기서는 '신규회원' 링크를 클릭할 때 GET 요청이 발생하기 때문에 doGet() 메서드를 오버라이딩 하였다.
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
-		RequestDispatcher rd = request.getRequestDispatcher("/member/MemberForm.jsp");
-		rd.forward(request, response);
-		
+		//MemberForm.jsp의 URL을 ServletRequest에 저장한다.
+		request.setAttribute("viewUrl", "/member/MemberForm.jsp");
 	}
 	
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		try {
-			
 			ServletContext sc = this.getServletContext();
-			Connection conn = (Connection) sc.getAttribute("conn");
+			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
 			
-			MemberDao memberDao = new MemberDao();
-			memberDao.setConnection(conn);
+			//프런트 컨트롤러가 준비해놓은 Member 객체를 ServletRequest 보관소에서 꺼내도록 코드 작성
+			Member member = (Member)request.getAttribute("member");
+			memberDao.insert(member);
 			
-			memberDao.insert(new Member()
-					.setEmail(request.getParameter("email"))
-					.setPassword(request.getParameter("password"))
-					.setName(request.getParameter("name")));
-			
-			response.sendRedirect("list");
+			//리다이렉트 해야 하는 경우에 반드시 URL 앞부분에 "redirect:" 문자열을 붙여야 한다.
+			request.setAttribute("viewUrl", "redirect:list.do");
 			
 		} catch(Exception e) {
-			e.printStackTrace();
-			request.setAttribute("error", e);
-			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
-			rd.forward(request, response);
+			throw new ServletException(e);
 		} 
 	}
 }

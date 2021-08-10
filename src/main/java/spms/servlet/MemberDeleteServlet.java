@@ -28,20 +28,13 @@ public class MemberDeleteServlet extends HttpServlet{
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		try {
 			ServletContext sc = this.getServletContext();
-			Connection conn = (Connection) sc.getAttribute("conn");
-			
-			MemberDao memberDao = new MemberDao();
-			memberDao.setConnection(conn);
+			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
 			
 			memberDao.delete(Integer.parseInt(request.getParameter("no")));
-			
-			response.sendRedirect("list");
+			request.setAttribute("viewUrl", "redirect:list.do");
 			
 		} catch(Exception e) {
-			e.printStackTrace();
-			request.setAttribute("error", e);
-			RequestDispatcher rd = request.getRequestDispatcher("/Error.jsp");
-			rd.forward(request, response);
+			throw new ServletException(e);
 		} 
 	}
 	
