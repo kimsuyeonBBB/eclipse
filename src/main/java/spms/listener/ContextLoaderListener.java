@@ -12,6 +12,12 @@ import javax.sql.DataSource;
 
 import org.apache.commons.dbcp.BasicDataSource;
 
+import spms.controls.LogInController;
+import spms.controls.LogOutController;
+import spms.controls.MemberAddController;
+import spms.controls.MemberDeleteController;
+import spms.controls.MemberListController;
+import spms.controls.MemberUpdateController;
 import spms.dao.MemberDao;
 import spms.util.DBConnectionPool;
 
@@ -26,11 +32,17 @@ public class ContextLoaderListener implements ServletContextListener{
 			InitialContext initialContext = new InitialContext();
 			DataSource ds = (DataSource)initialContext.lookup("java:comp/env/jdbc/join_db");
 			
-			//웹 애플리케이션이 시작될 때 MemberDao 객체를 준비하여 ServletContext에 보관한다.
 			MemberDao memberDao = new MemberDao();
 			memberDao.setDataSource(ds);
 			
-			sc.setAttribute("memberDao", memberDao);
+			//LogOutController는 MemberDao가 필요없기 때문에 셋터 메서드를 호출하지 않는다.
+			sc.setAttribute("/auth/login.do", new LogInController().setMemberDao(memberDao));
+			sc.setAttribute("/auth/logout.do", new LogOutController());
+			sc.setAttribute("/member/list.do", new MemberListController().setMemberDao(memberDao));
+			sc.setAttribute("/member/add.do", new MemberAddController().setMemberDao(memberDao));
+			sc.setAttribute("/member/update.do", new MemberUpdateController().setMemberDao(memberDao));
+			sc.setAttribute("/member/delete.do", new MemberDeleteController().setMemberDao(memberDao));
+			
 		} catch(Throwable e){
 			e.printStackTrace();
 		}

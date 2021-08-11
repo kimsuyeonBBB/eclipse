@@ -1,14 +1,23 @@
 package spms.servlet;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import spms.controls.Controller;
+import spms.controls.LogInController;
+import spms.controls.LogOutController;
+import spms.controls.MemberAddController;
+import spms.controls.MemberDeleteController;
+import spms.controls.MemberListController;
+import spms.controls.MemberUpdateController;
 import spms.vo.Member;
 
 //프런트 컨트롤러
@@ -23,45 +32,55 @@ public class DispatcherServlet extends HttpServlet{
 		//클라이언트가 요청한 서블릿의 경로를 알기위한 코드
 		String servletPath = request.getServletPath();
 		try {
-			//서블릿 경로에 따라 조건문을 사용하여 적절한 페이지 컨트롤러를 인클루딩 한다.
-			String pageControllerPath = null;
+			//프런트 컨트롤러와 페이지 컨트롤러 사이에 데이터나 객체를 주고 받을 때 사용할 Map 객체를 준비한다.
+			//즉 MemberListController가 사용할 객체를 준비하여 Map 객체에 담아서 전달해준다.
+			ServletContext sc = this.getServletContext();
 			
-			if("/member/list.do".equals(servletPath)) {
-				pageControllerPath = "/member/list";
-			} else if ("/member/add.do".equals(servletPath)) {
-				pageControllerPath = "/member/add";
+			HashMap<String,Object> model = new HashMap<String,Object>();
+			//MemberListController는 회원목록을 가져오기 위해서 MemberDao 객체가 필요하다.
+			//그래서 ServletContext 보관소에 저장된 MemberDao 객체를 꺼내서 Map 객체에 담는다.
+			model.put("session", request.getSession());
+			
+			Controller pageController = (Controller)sc.getAttribute(servletPath);
+			
+			if("/member/add.do".equals(servletPath)) {
 				if(request.getParameter("email") != null) {
-					//사용자가 입력한 데이터를 페이지 컨트롤러에게 전달하기 위해 요청 매개변수의 값을 꺼내서 VO객체에 담고, 'member'라는 키로 ServletRequest에 보관하였다.
-					request.setAttribute("member", new Member()
+					model.put("member", new Member()
 							.setEmail(request.getParameter("email"))
 							.setPassword(request.getParameter("password"))
 							.setName(request.getParameter("name")));
 				}
 			} else if("/member/update.do".equals(servletPath)) {
-				pageControllerPath = "/member/update";
 				if(request.getParameter("email") != null) {
-					request.setAttribute("member", new Member()
+					model.put("member", new Member()
 							.setNo(Integer.parseInt(request.getParameter("no")))
 							.setEmail(request.getParameter("email"))
 							.setName(request.getParameter("name")));
+				} else {
+					model.put("no", new Integer(request.getParameter("no")));
 				}
 			} else if("/member/delete.do".equals(servletPath)) {
-				pageControllerPath = "/member/delete";
+				model.put("no", new Integer(request.getParameter("no")));
 			} else if("/auth/login.do".equals(servletPath)) {
-				pageControllerPath = "/auth/login";
-			} else if("/auth/logout.do".equals(servletPath)) {
-				pageControllerPath = "/auth/logout";
+				if(request.getParameter("email") != null) {
+					model.put("loginInfo", new Member()
+							.setEmail(request.getParameter("email"))
+							.setPassword(request.getParameter("password")));
+				}
+			} 
+			
+			//MemberListController가 일반 클래스이기 때문에 Controller 인터페이스에 정해진대로 execute() 메서드를 호출해야 한다.
+			//execute()를 호출할 때 페이지 컨트롤러를 위해 준비한 Map 객체를 매개변수로 넘긴다.
+			String viewUrl = pageController.execute(model);
+			for(String key : model.keySet()) {
+				request.setAttribute(key, model.get(key));
 			}
-			RequestDispatcher rd = request.getRequestDispatcher(pageControllerPath);
-			rd.include(request, response);
-			//페이지 컨트롤러의 실행이 끝나면 화면 출력을 위해 ServletRequest에 보관된 뷰 URL로 실행을 위임한다.
-			//단 뷰 URL이 "redirect:"로 시작한다면 인클루딩 하는 대신에 sendRedirect()를 호출한다.
-			String viewUrl = (String)request.getAttribute("viewUrl");
+			
 			if(viewUrl.startsWith("redirect:")) {
 				response.sendRedirect(viewUrl.substring(9));
 				return;
 			} else {
-				rd = request.getRequestDispatcher(viewUrl);
+				RequestDispatcher rd = request.getRequestDispatcher(viewUrl);
 				rd.include(request, response);
 			}
 		} catch(Exception e) {
