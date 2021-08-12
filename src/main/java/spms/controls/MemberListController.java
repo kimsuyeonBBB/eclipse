@@ -2,14 +2,14 @@ package spms.controls;
 
 import java.util.Map;
 
-import spms.dao.MemberDao;
+import spms.dao.MySqlMemberDao;
 
 //페이지 컨트롤러가 되려면 Controller 규칙에 따라 클래스를 작성해야 한다.
 public class MemberListController implements Controller {
 	//MemberDao를 주입받기 위한 인스턴스 변수와 셋터 메서드를 추가하였다.
-	MemberDao memberDao;
+	MySqlMemberDao memberDao;
 	
-	public MemberListController setMemberDao(MemberDao memberDao) {
+	public MemberListController setMemberDao(MySqlMemberDao memberDao) {
 		this.memberDao = memberDao;
 		return this;
 	}

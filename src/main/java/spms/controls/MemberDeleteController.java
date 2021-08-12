@@ -2,9 +2,11 @@ package spms.controls;
 
 import java.util.Map;
 
+import spms.bind.DataBinding;
 import spms.dao.MemberDao;
+import spms.dao.MySqlMemberDao;
 
-public class MemberDeleteController implements Controller {
+public class MemberDeleteController implements Controller, DataBinding {
 	MemberDao memberDao;
 	
 	public MemberDeleteController setMemberDao(MemberDao memberDao) {
@@ -18,6 +20,14 @@ public class MemberDeleteController implements Controller {
 		memberDao.delete(no);
 		
 		return "redirect:list.do";
+	}
+
+	//회원정보를 삭제할 때 회원 번호가 필요하다.
+	@Override
+	public Object[] getDataBinders() {
+		return new Object[] {
+				"no",Integer.class
+		};
 	}
 
 }

@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import spms.dao.MemberDao;
+import spms.dao.MySqlMemberDao;
 import spms.vo.Member;
 
 @SuppressWarnings("serial")
@@ -27,7 +27,7 @@ public class MemberUpdateServlet extends HttpServlet {
 		try {
 			//컨텍스트 초기화 매개변수의 값을 얻기 위해 객체가 필요하다.
 			ServletContext sc = this.getServletContext();
-			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
+			MySqlMemberDao memberDao = (MySqlMemberDao)sc.getAttribute("memberDao");
 			
 			Member member = memberDao.selectOne(Integer.parseInt(request.getParameter("no")));
 			
@@ -43,7 +43,7 @@ public class MemberUpdateServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException{
 		try {
 			ServletContext sc = this.getServletContext();
-			MemberDao memberDao = (MemberDao)sc.getAttribute("memberDao");
+			MySqlMemberDao memberDao = (MySqlMemberDao)sc.getAttribute("memberDao");
 
 			Member member = (Member)request.getAttribute("member");
 			memberDao.update(member);
